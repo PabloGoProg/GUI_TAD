@@ -4,6 +4,10 @@ import json
 from gui_elements import *
 from structures import *
 
+''' 
+La clase Menu esta encaragada de Manejar el ingreso a otras activdades de
+una interfaz grafica, o de lo contratrio salir de la misma 
+'''
 class Menu(object):
 
     ''' Método inicializador del MEnu '''
@@ -28,6 +32,12 @@ class Menu(object):
         for button in self.buttons: # Cambia el font de cada boton por individual
             button.font = pg.font.Font(None, 32)
 
+'''
+La Actividad de árboles permite al usuario jugfar con una forma visual
+de una estructura de arbol Nario o Binario, dando la posibilidad de añadir 
+una cantidad deseada de nodos y pover ver los distintos tipos dfe recorridos
+de cada uno de estos aárboles
+'''
 class ActividadArboles(object):
 
     ''' Método inicializador de la Actividad de árboles '''
@@ -215,6 +225,11 @@ class ActividadArboles(object):
         self.text_fields.append(TextFeild('Nodo padre', 10, 94, 50, 32))
         self.buttons.append(Button("Salir", 10, self.screen.get_height()-42, 100, 32))
 
+'''
+La actividad de Solitario permite al usuario interactuar con una estructura de Pila
+donde, entregadas unas pilas de cartas, el usuario podrá buscar ordenar estas cartas
+en una sola pila, siguiendo un orden descendiente de las cartas
+'''
 class Solitario(object):
 
     class MouseManiupulator():
@@ -236,7 +251,7 @@ class Solitario(object):
                 self.coords = coord[len(coord)-1]
                 stack.pop()
             else: # Se encarga de agregar la carta al stack
-                if len(stack) == 0 or self.deck.index(self.card) > self.deck.index(stack[len(stack)-1]) or self.deck.index(stack[len(stack)-1]) == len(self.deck)-1:
+                if len(stack) == 0 or self.deck.index(self.card) < self.deck.index(stack[len(stack)-1]) or self.deck.index(stack[len(stack)-1]) == len(self.deck)-1 or self.card == self.deck[len(self.deck)-1]:
                     stack.append(self.card)
                     temp = coord[len(coord)-1]
                     self.coords = (temp[0], temp[1]+25)
@@ -347,6 +362,11 @@ class Solitario(object):
         self.buttons.append(Button('Salir', self.screen.get_width()- 110, self.screen.get_height()-42, 100, 32))
         self.buttons.append(Button('Recoger', self.screen.get_width()- 110, self.screen.get_height()-84, 100, 32))
 
+'''
+La actividad de Grafos y ciudades permite al usuario ubicarse en un mapa de Colombia, 
+siendo este representado por un grafo donde cada una de las ciudades visibles en el mapa 
+es un vertice, y cada una de los posibles desplazamientos entre ciudades son sus aristas
+'''
 class GrafosCiudades:
 
     ''' Método inicializador de la clase GrafosCiudades '''

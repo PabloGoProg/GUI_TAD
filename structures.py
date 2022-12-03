@@ -1,11 +1,11 @@
 from collections import defaultdict
 import pygame as pg
 
-'''
-    La baraja de cartas representa una estructura de cola para
-    efectos practicos de este proyecto
-'''
 
+''' 
+La clase baraja se compone de un stack con elementos hardcodeados,
+siendo estos elementos, cartas pertenecientes a un juego de solitario
+'''
 class Baraja:
 
     class Node:
@@ -23,6 +23,7 @@ class Baraja:
         self.len = 0
         self.recortar_sprite()
 
+    ''' Añade un nodo al stack '''
     def append_node(self, data): 
         new_node = self.Node(data)
         if self.len == 0:
@@ -33,6 +34,7 @@ class Baraja:
             self.tail = self.tail.next
         self.len += 1
 
+    ''' Saca un nodo del stack '''
     def pop_node(self):
         if self.len <= 1:
             self.head = None
@@ -46,6 +48,7 @@ class Baraja:
         self.tail = cur
         self.len -= 1
 
+    ''' Imprime los nodos habidos dentro del stack '''
     def print(self):
         arr = []
         cur = self.head
@@ -54,16 +57,18 @@ class Baraja:
             cur = cur.next
         print(arr, self.len)
             
+    ''' Se encarga de rtecortar las cartas de las sprite-sheet (cards.jpg) '''        
     def recortar_sprite(self):
         baraja = pg.image.load(self.sprite_cartas)
         baraja = pg.transform.scale(baraja, (560, 240))
 
-        for y in range(0, 240, 120):
+        for y in range(0, 240, 120): # Se encarga de seccionar la imagen en partes equivalentes
             for x in range(0, 560, 80):
                 curr_image = pg.Surface((80,120)).convert_alpha()
                 curr_image.blit(baraja, (0,0), (x, y, 80, 120))
                 self.append_node(curr_image)
     
+        ''' Añade el As a la posision requerida por la actividad '''
         temp_val = self.head.data    
         self.head = self.head.next
         as_node = self.Node(temp_val)
@@ -72,8 +77,12 @@ class Baraja:
             cur = cur.next
         as_node.next = self.tail
         cur.next = as_node
-        
 
+'''
+La clase Nary Tree esta planteado con el fin de funcionar dentro dse
+una interfaz grafica de Pygame, encargada de mostrar el añadido de nodos
+y el recorrido de un árbol de esta categoría
+'''
 class NAryTree(object):
 
     class Node(object):
@@ -114,6 +123,7 @@ class NAryTree(object):
                 return True
         return False
 
+    ''' Recorrido inorder de un árbol Nario '''
     def inorder(self):
         inorder = []
         def traversal(node):
@@ -124,6 +134,7 @@ class NAryTree(object):
         traversal(self.root)
         self.traversal = inorder
 
+    ''' Recorrido preorder de un árbol Nario '''
     def preorder(self):
         preorder = []
         def traversal(node):
@@ -134,6 +145,7 @@ class NAryTree(object):
         traversal(self.root)
         self.traversal = preorder
     
+    ''' Recorrido postorder de un árbol Nario '''
     def postorder(self):
         postorder = []
         def traversal(node):
@@ -157,16 +169,21 @@ class NAryTree(object):
         self.traversal = [ans for k,ans in sorted(route.items())] 
         return [ans for k,ans in sorted(route.items())] 
 
-
+'''
+El BinaryTree, al igual que el NaryTree, busca poder representar el añadido
+de nodos y el recorddio de un arbol de categoría binaria
+'''
 class BinaryTree(object):
 
     class Node:
 
+        ''' Método inicializador del nodo de un árbol binario '''
         def __init__(self, data):
             self.data = data
             self.left = None
             self.right = None
 
+    ''' Método inicializador de un árbol binario '''
     def __init__(self) -> None:
         self.root = None
         self.len = 0
@@ -246,7 +263,12 @@ class BinaryTree(object):
         self.traversal = [ans for k,ans in sorted(route.items())] 
         return [ans for k,ans in sorted(route.items())] 
 
-
+'''
+La clase grafo fue desarrollada con el fin de representar un contexto que se acerca 
+a la vida real, donde dado un mapa y un conjunto de vertices y aristas, las cuales representan 
+ciudades y conexiones dentro de ese mapa, hayar los caminos más corrtos entre distintos puntos 
+o ciudades
+'''
 class Grafo:
 
     class Vertice:
@@ -276,11 +298,16 @@ class Grafo:
         if not v in self.vertices:
             self.vertices[v] = self.Vertice(n,v) # Añadimos el vertice al diccionario
     
+    ''' Genera una arista entre un nodo a y un nodo b, entregando un ponderado '''
     def generar_arista(self, a, b, p):
         if a in self.vertices and b in self.vertices:
             self.vertices[a].agregar_vecino(b, p)
             self.vertices[b].agregar_vecino(a, p)
 
+    ''' 
+    Funcion necesaria para el profeso del algoritmo de Dijkstra, encargada de
+    encontrar el menor elemento habido dentro de una lista
+    '''
     def minimo(self, lista):
         if len(lista) > 0:
             min = self.vertices[lista[0]].distancia
@@ -291,6 +318,7 @@ class Grafo:
                     v = element 
             return v
     
+    ''' Encargado de devolver el camino más corto entre dos nodos a,b (funciona tras realizar Dijkstra) '''
     def camino_vertice(self, a, b):
         camino = []
         actual = b
@@ -299,6 +327,11 @@ class Grafo:
             actual = self.vertices[actual].predecesor
         self.camino =  camino
 
+    ''' 
+    El algoritmo de Dijkstra se encarga de buscar la menor distancia entre un 
+    vertice (a) y el resto de vertices de un grafo
+    --> Necesidad de ponderados negativos
+    '''
     def dijkstra(self, a):
         if a in self.vertices:
             self.vertices[a].distancia = 0
