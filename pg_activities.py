@@ -72,7 +72,7 @@ class ActividadArboles(object):
             if self.tree.len < data[0]-1:
                 self.tree.insert_child(self.tree.root, data[2], data[1])
         elif self.tree_type.selected_item == 'Binarios': # Agrega un valor al arbol binario
-            if self.binary_tree.len < data[0]-1:
+            if self.binary_tree.len < data[0]:
                 self.binary_tree.insert_node(self.binary_tree.root, data[1])
                 self.binary_tree.len += 1
         self.text_fields[1].input = ""
@@ -163,7 +163,8 @@ class ActividadArboles(object):
             self.draw_binary_tree()
         ''' Dibuja los Combo Box en la pantalla '''
         self.tree_type.deploy(self.screen)
-        self.traversal_type.deploy(self.screen)
+        if self.tree_type.selected_item == 'Binarios':
+            self.traversal_type.deploy(self.screen)
 
         if self.tree_type.selected_item != self.tree_type.name:
             for text_field in self.text_fields:

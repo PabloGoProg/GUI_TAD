@@ -9,9 +9,8 @@ guardan todas las actividades solicitadas, además de el ciclo principal del jue
 '''
 class MainRun:
             
+    ''' Método inicializador de la clase MainRun '''
     def __init__(self, w, h):
-
-        ''' Método constructor de la clase MainRun '''
         pg.init()
         self.display = pg.display.set_mode((w,h))
         self.display_clock = pg.time.Clock()
