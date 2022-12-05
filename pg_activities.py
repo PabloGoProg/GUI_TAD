@@ -72,8 +72,9 @@ class ActividadArboles(object):
             if self.tree.len < data[0]-1:
                 self.tree.insert_child(self.tree.root, data[2], data[1])
         elif self.tree_type.selected_item == 'Binarios': # Agrega un valor al arbol binario
-            self.binary_tree.insert_node(self.binary_tree.root, data[1])
-            self.binary_tree.len += 1
+            if self.binary_tree.len < data[0]-1:
+                self.binary_tree.insert_node(self.binary_tree.root, data[1])
+                self.binary_tree.len += 1
         self.text_fields[1].input = ""
         self.text_fields[2].input = ""
         
@@ -197,6 +198,7 @@ class ActividadArboles(object):
                     t_field.active = False
             if self.buttons[0].hitbox.collidepoint(pg.mouse.get_pos()):
                     self.avaliable = False 
+                    self.__init__(self.screen)
             if self.tree_type.size.collidepoint(pg.mouse.get_pos()):
                 if self.tree_type.deployed:
                     self.tree_type.deployed = False
@@ -374,13 +376,19 @@ class GrafosCiudades:
         self.screen = screen
         self.avaliable = False
         self.aristas_mostradas = False
+        ''' Elementos de la actividad '''
         self.background = pg.image.load('mapa_col.png')
         self.contenido_ciudades = Grafo()
         self.origen = ComboBox('Ciudad Origen', 10, 10, 140, 32)
         self.destino = ComboBox('Ciudad Destino', 160, 10, 140, 32)
+        self.punto_a = ComboBox('Punto A', self.screen.get_width()-280, 150, 130, 32)
+        self.punto_b = ComboBox('Punto B', self.screen.get_width()-140, 150, 130, 32)
+        self.text_field = TextFeild('Ponderado', self.screen.get_width()-(137 + 65), 190, 130, 32)
+        self.ponderados = ComboBox('Tipo ponderado', self.screen.get_width()-160, 60, 130, 32)
         self.botones = []
         self.keys = {}
         self.lista_coordenadas = []
+        ''' Llamado a configuracion basica ''' 
         self.basic_config()
 
     ''' Se encarga de dibujar los elementos requeridos en la pantalla '''
@@ -390,61 +398,136 @@ class GrafosCiudades:
         ''' Dibuja la totalidad de los botones de la actividad '''
         for boton in self.botones:
             boton.draw_button(self.screen)
+        ''' Dibuja el Dijkstra si se tienen las condiciones necesarias '''
+        if len(self.contenido_ciudades.camino) > 1 and self.contenido_ciudades.camino[1] > 0:
+            self.draw_dijkstra() 
+        ''' Dibyujado de los vertices del grafo '''
+        self.draw_graph()
         ''' Dibuja las aristas del grafo si el usuario lo requiere '''
         if self.aristas_mostradas:
             self.draw_conections()
-        ''' Dibyujado de los vertices del grafo '''
-        self.draw_graph()
-        ''' Dibuja el Dijkstra si se tienen las condiciones necesarias '''
-        if len(self.contenido_ciudades.camino) > 1:
-            self.draw_dijkstra() 
+        ''' Dibuja la ventana emergente encargada de la seleccion del ponderado '''
+        self.ddibujar_seleccion_ponderado()
         ''' Dibujado de los Combo Box '''
         self.origen.deploy(self.screen)
         self.destino.deploy(self.screen)
+        self.ponderados.deploy(self.screen)
 
-    ''' Dibuja todos los vertices de un grafo '''
+    ''' Dibuja la ventana emergente para agregar los ponderados '''
+    def ddibujar_seleccion_ponderado(self):
+        temp_font = pg.font.Font(None, 32)
+        if self.ponderados.selected_item == 'Personalizados':
+            titulo = temp_font.render('Ponderado', True, (0,0,0)) # Creación del titulo
+            ''' Dibujado de rectangulo '''
+            pg.draw.rect(self.screen, (255,255,255), (self.screen.get_width()-285, self.punto_a.size.y-35, 280, 115), 0)
+            pg.draw.rect(self.screen, (0,0,0), (self.screen.get_width()-285, self.punto_a.size.y-35, 280, 115), 2)
+            ''' Dibujar el titulo y los componentes de la ventana '''
+            self.screen.blit(titulo, (self.screen.get_width() - (137 + titulo.get_width()//2), self.punto_a.size.y-40 + titulo.get_height()//2))
+            self.text_field.draw_text_field(self.screen)
+            self.punto_b.deploy(self.screen)
+            self.punto_a.deploy(self.screen)
+
+    ''' Se encarga de llenar las opciiones del combo box de b con las aristas correspondientes '''
+    def llenar_punto_b(self):
+        temp, key = [], self.keys[self.punto_a.selected_item]
+        for arista in self.contenido_ciudades.vertices[key].vecinos:
+            temp.append(self.contenido_ciudades.vertices[arista[0]].name)
+        self.punto_b.options = temp
+    
+    ''' 
+    Tomas los valores del text field y las combo box para añadir ponderado a una arista 
+    entre dos puntos seleccionados
+    '''
+    def ingresar_ponderado(self):
+        if self.punto_b.selected_item != self.punto_b.name:
+            ''' Validacion del valor '''
+            valor = None
+            try:
+                valor = int(self.text_field.input)
+            except:
+                return
+            ''' Simplificación para el llamado '''
+            a_key = self.keys[self.punto_a.selected_item]
+            b_key = self.keys[self.punto_b.selected_item]
+            ''' reemplazo de los ponderados '''
+            if valor > 0:
+                for arista in self.contenido_ciudades.vertices[a_key].vecinos:
+                    if arista[0] == b_key:
+                        arista[1] = valor
+                for arista in self.contenido_ciudades.vertices[b_key].vecinos:
+                    if arista[0] == a_key:
+                        arista[1] = valor
+                self.punto_b.selected_item = self.punto_b.name
+                self.text_field.input = ''
+
+    ''' Dibuja todos los vertices de un grafo en un mapa '''
     def draw_graph(self):
         tempo_font = pg.font.Font(None, 24) # Fuente temporal
         for i in range(len(self.lista_coordenadas)):
             txt = tempo_font.render(self.origen.options[i], True, (255,255,255))
-            pg.draw.circle(self.screen, (0,255,255), self.lista_coordenadas[i], 5, 0)
-            pg.draw.circle(self.screen, (0,0,0), self.lista_coordenadas[i], 5, 2)
-            self.screen.blit(txt, (self.lista_coordenadas[i][0] - txt.get_width()//2, self.lista_coordenadas[i][1] - 20))
+            pg.draw.circle(self.screen, (0,255,255), self.lista_coordenadas[i], 10, 0)
+            pg.draw.circle(self.screen, (0,0,0), self.lista_coordenadas[i], 10, 2)
+            self.screen.blit(txt, (self.lista_coordenadas[i][0] - txt.get_width()//2, self.lista_coordenadas[i][1] - 25))
     
     ''' Dibuja el camino más corto entre 2 vertices de un grafo '''
     def draw_dijkstra(self):
-        temp_font, costo = pg.font.Font(None, 24), 0
-        for i in range(len(self.contenido_ciudades.camino)-1):
-            x1 = self.contenido_ciudades.vertices[self.contenido_ciudades.camino[i]]
-            x2 = self.contenido_ciudades.vertices[self.contenido_ciudades.camino[i+1]]
-            pg.draw.line(self.screen, (255,0,0), x1.coordenadas, x2.coordenadas, 5)
-            costo += x2.distancia
-            for arista in x1.vecinos:
-                if arista[0] == x2.id:
-                    txt = temp_font.render(str(arista[1]), True, (0,0,0))
-            self.screen.blit(txt, (x1.coordenadas[0] - (x1.coordenadas[0] - x2.coordenadas[0])//2, 
-                                    x1.coordenadas[1] - (x1.coordenadas[1] - x2.coordenadas[1])//2))
-        self.mostrar_camino(costo, temp_font)
+        temp_font = pg.font.Font(None, 24)
+        if self.destino.selected_item != self.destino.name:
+            ''' Dibuja una linea roja entre los puntos que recorre el camino dado '''
+            for i in range(len(self.contenido_ciudades.camino[0])-1):
+                x1 = self.contenido_ciudades.vertices[self.contenido_ciudades.camino[0][i]]
+                x2 = self.contenido_ciudades.vertices[self.contenido_ciudades.camino[0][i+1]]
+                pg.draw.line(self.screen, (255,0,0), x1.coordenadas, x2.coordenadas, 5)
+            ''' Imprime el cuadro de texto con el recorrido y sus costo '''
+            self.mostrar_camino(temp_font)
     
     ''' Dibuja el camino más corto en un recuadro de texto '''
-    def mostrar_camino(self, costo, font):
+    def mostrar_camino(self, font):
         ciudades = [] # Genera una lista que tendra el nombre de las ciudades
-        for v in self.contenido_ciudades.camino:
+        for v in self.contenido_ciudades.camino[0]:
             ciudades.append(self.contenido_ciudades.vertices[v].name) # Agrega el nombre de la ciudad 
-        recorrido = font.render('Camino: ' + str(ciudades) + '  Costo: ' + str(costo), True,(0,0,0))
+        recorrido = font.render('Camino: ' + str(ciudades) + '  Costo: ' + str(self.contenido_ciudades.camino[1]), True,(0,0,0))
         pg.draw.rect(self.screen, (255,255,243), (45, self.screen.get_height()-52, recorrido.get_width()+20, 32), 0)
         pg.draw.rect(self.screen, (0,0,0), (45, self.screen.get_height()-52, recorrido.get_width()+20, 32), 2)
         self.screen.blit(recorrido, (55, self.screen.get_height()-(52 - recorrido.get_height()//2))) 
 
     ''' Dibuja las intersecciones  internas del grafo '''
     def draw_conections(self):
+        fuente_auxiliar = pg.font.Font(None, 24)
         for v in self.contenido_ciudades.vertices:
             for destino in self.contenido_ciudades.vertices[v].vecinos:
-                pg.draw.line(self.screen, (13,20,114), self.contenido_ciudades.vertices[v].coordenadas, 
+                if destino[1] > 0:
+                    text = fuente_auxiliar.render(str(destino[1]), True, (0,0,0))
+                    pg.draw.line(self.screen, (13,20,114), self.contenido_ciudades.vertices[v].coordenadas, 
                                 self.contenido_ciudades.vertices[destino[0]].coordenadas, 1)
+                    if self.contenido_ciudades.vertices[destino[0]].visitado == False:
+                        self.screen.blit(text, (self.contenido_ciudades.vertices[v].coordenadas[0] - (self.contenido_ciudades.vertices[v].coordenadas[0] - self.contenido_ciudades.vertices[destino[0]].coordenadas[0])//2,
+                                                self.contenido_ciudades.vertices[v].coordenadas[1] - (self.contenido_ciudades.vertices[v].coordenadas[1] - self.contenido_ciudades.vertices[destino[0]].coordenadas[1])//2))
+            self.contenido_ciudades.vertices[v].visitado = True
+        for v in self.contenido_ciudades.vertices:
+            self.contenido_ciudades.vertices[v].visitado = False
+
+    ''' Configuraciones basicas del ponderado '''
+    def definir_ponderados(self):
+        for vertice in self.contenido_ciudades.vertices:
+            for arista in self.contenido_ciudades.vertices[vertice].vecinos:
+                if self.ponderados.selected_item == 'Aleatorios' and arista[1] == -1: 
+                    arista[1] = random.randint(1, 15) # Ponderado aleatorio
+                elif self.ponderados.selected_item == 'Personalizados':
+                    arista[1] = -1
+                else:
+                    break
 
     ''' Maneja los eventos ocurridos dentro de la actividad de grafos '''
     def event_manager(self, e):
+        if e.type == pg.KEYDOWN:
+            if self.text_field.active:
+                if e.key == pg.K_BACKSPACE:
+                    self.text_field.input = self.text_field.input[:-1]
+                elif e.key == pg.K_RETURN:
+                    self.ingresar_ponderado()
+                else:
+                    self.text_field.input += e.unicode 
         if e.type == pg.MOUSEBUTTONDOWN and e.button == 1:
             ''' Maneja los eventos generados por los botones '''
             if self.botones[0].hitbox.collidepoint(pg.mouse.get_pos()):
@@ -452,32 +535,63 @@ class GrafosCiudades:
                     self.aristas_mostradas = False
                 else:
                     self.aristas_mostradas = True
-            if self.botones[1].hitbox.collidepoint(pg.mouse.get_pos()):
+            elif self.botones[1].hitbox.collidepoint(pg.mouse.get_pos()):
                 if self.origen.selected_item != self.origen.name:
                     self.contenido_ciudades.dijkstra(self.keys[self.origen.selected_item])
                     if self.destino.selected_item != self.destino.name:
                         self.contenido_ciudades.camino_vertice(self.keys[self.destino.selected_item], self.keys[self.destino.selected_item])
-            if self.botones[2].hitbox.collidepoint(pg.mouse.get_pos()):
+            elif self.botones[2].hitbox.collidepoint(pg.mouse.get_pos()):
                 self.avaliable = False
                 self.__init__(self.screen)
-            ''' Maneja los eventos generados por los Combo Box '''
-            if self.origen.size.collidepoint(pg.mouse.get_pos()):
+                ''' Maneja los eventos generados por los Combo Box '''
+            elif self.origen.size.collidepoint(pg.mouse.get_pos()):
                 if self.origen.deployed:
                     self.origen.deployed = False
                 else:
                     self.origen.deployed = True
-            if self.destino.size.collidepoint(pg.mouse.get_pos()):
+            elif self.destino.size.collidepoint(pg.mouse.get_pos()):
                 if self.destino.deployed:
                     self.destino.deployed = False
                 else:
-                    self.destino.deployed = True      
-            if self.origen.deployed:
+                    self.destino.deployed = True     
+            elif self.ponderados.size.collidepoint(pg.mouse.get_pos()):
+                if self.ponderados.deployed:
+                    self.ponderados.deployed = False
+                else:
+                    self.ponderados.deployed = True    
+            elif self.punto_a.size.collidepoint(pg.mouse.get_pos()) and self.ponderados.selected_item == 'Personalizados':
+                if self.punto_a.deployed:
+                    self.punto_a.deployed = False
+                else:
+                    self.punto_a.deployed = True  
+            elif self.punto_b.size.collidepoint(pg.mouse.get_pos()) and self.ponderados.selected_item == 'Personalizados':
+                if self.punto_b.deployed:
+                    self.punto_b.deployed = False
+                else:
+                    self.punto_b.deployed = True  
+            elif self.origen.deployed:
                 self.origen.select_item()
-            if self.destino.deployed:
+            elif self.destino.deployed:
                 self.destino.select_item()
                 if self.origen.selected_item != self.origen.name and self.destino.selected_item != self.destino.name:
                     if not self.destino.deployed:
                         self.contenido_ciudades.camino_vertice(self.keys[self.origen.selected_item], self.keys[self.destino.selected_item])
+            elif self.ponderados.deployed:
+                self.ponderados.select_item()
+                self.definir_ponderados()
+                if self.ponderados.selected_item == 'Personalizados':
+                    self.contenido_ciudades.camino = []
+                    self.destino.selected_item = self.destino.name
+            elif self.punto_a.deployed and not self.punto_b.deployed:
+                self.punto_a.select_item()
+                if self.punto_a.selected_item != self.punto_a.name:
+                    self.llenar_punto_b()
+            elif self.punto_b.deployed and not self.punto_a.deployed:
+                self.punto_b.select_item()
+            elif self.text_field.hitbox.collidepoint(pg.mouse.get_pos()):
+                self.text_field.active = True
+            else:
+                self.text_field.active = False
 
     ''' Métodod de configuración básica de la actividad de grafos '''
     def basic_config(self):
@@ -485,6 +599,8 @@ class GrafosCiudades:
         self.botones.append(Button('Aristas', 310, 10, 90, 32))
         self.botones.append(Button('Dijsktra', 410, 10, 90, 32))
         self.botones.append(Button('Salir', self.screen.get_width()-130, self.screen.get_height()-53, 90, 32))
+        self.ponderados.options.append('Aleatorios')
+        self.ponderados.options.append('Personalizados')
         self.read_json()
         self.lista_coordenadas.append((70,110)) # San Andres
         self.lista_coordenadas.append((250,410)) # Armeria
@@ -511,6 +627,7 @@ class GrafosCiudades:
         for valor in self.keys.keys():
             self.origen.options.append(valor)
             self.destino.options.append(valor)
+            self.punto_a.options.append(valor)
     
     ''' Método de lectura del JSON y adicion de ponderados aleatorios '''
     def read_json(self):
@@ -520,8 +637,6 @@ class GrafosCiudades:
             for ciudad in ciudades: # Agregamos los vertices al grafo
                 self.contenido_ciudades.agregar_vertice(ciudad.get('name'), ciudad.get('id'))
                 self.keys[ciudad.get('name')] = ciudad.get('id') # Guerdamos datos necesarios para Combo Box
-
             for ciudad in ciudades:  # Agregamos las aristas de cada vertice
                 for destino in ciudad.get('destinations'):
-                    p = random.randint(1, 12) # Ponderado aleatorio
-                    self.contenido_ciudades.generar_arista(ciudad.get('id'), destino, p)
+                    self.contenido_ciudades.generar_arista(ciudad.get('id'), destino, -1)

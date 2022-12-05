@@ -31,6 +31,8 @@ class MainRun:
                 if e.type == pg.KEYDOWN:
                     if self.tree_activity.avaliable:
                         self.tree_activity.event_manager(e) # Inputs de actividad árbol
+                    elif self.grafos.avaliable:
+                        self.grafos.event_manager(e)
                 ''' Manejo de los inputs del mouse '''
                 if e.type == pg.MOUSEBUTTONDOWN and e.button == 1:
                     ''' Manejador de botones del Menu '''

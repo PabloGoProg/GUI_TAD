@@ -30,6 +30,7 @@ class ComboBox(BasicConfig):
     def deploy(self, screen: pg.display):
         temp_rect = self.size.copy()
         temp_text = self.font.render(self.selected_item, True, (0,0,0))
+        pg.draw.rect(screen, (255,255,243), self.size, 0)
         if temp_rect.collidepoint(pg.mouse.get_pos()):
             temp_rect = pg.draw.rect(screen, (0,255,0), self.size, 2)
         else:
@@ -72,6 +73,7 @@ class Button(BasicConfig):
     ''' Método encargado de dibnujar el boton en una pantalla (screen) '''
     def draw_button(self, screen: pg.display):
         text = self.font.render(self.name, True, (0,0,0))
+        pg.draw.rect(screen, (255,255,243), self.hitbox, 0)
         if self.hitbox.collidepoint(pg.mouse.get_pos()):
             pg.draw.rect(screen, (0,255,0), self.hitbox, 2)
         else:

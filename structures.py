@@ -286,7 +286,7 @@ class Grafo:
         ''' Añade un id de un vertice de id (v) distinto como un vecino '''
         def agregar_vecino(self, v, p):
             if not v in self.vecinos:
-                self.vecinos.append((v, p)) # Añadimos el id del vertice como vecino
+                self.vecinos.append([v, p]) # Añadimos el id del vertice como vecino
     
     ''' Método constructor de la clase grafo '''
     def __init__(self):
@@ -301,8 +301,16 @@ class Grafo:
     ''' Genera una arista entre un nodo a y un nodo b, entregando un ponderado '''
     def generar_arista(self, a, b, p):
         if a in self.vertices and b in self.vertices:
-            self.vertices[a].agregar_vecino(b, p)
-            self.vertices[b].agregar_vecino(a, p)
+            if not self.not_related(a,b):
+                self.vertices[a].agregar_vecino(b, p)
+            if not self.not_related(b,a):
+                self.vertices[b].agregar_vecino(a, p)
+
+    def not_related(self, a, b):
+        for aristas in self.vertices[a].vecinos:
+            if b == aristas[0]:
+                return True
+        return False
 
     ''' 
     Funcion necesaria para el profeso del algoritmo de Dijkstra, encargada de
@@ -322,10 +330,11 @@ class Grafo:
     def camino_vertice(self, a, b):
         camino = []
         actual = b
+        costo = self.vertices[actual].distancia
         while actual != None:
             camino.insert(0, actual)
             actual = self.vertices[actual].predecesor
-        self.camino =  camino
+        self.camino = [camino, costo]
 
     ''' 
     El algoritmo de Dijkstra se encarga de buscar la menor distancia entre un 
@@ -348,7 +357,7 @@ class Grafo:
             while len(no_visitados) > 0:
                 for arista in self.vertices[actual].vecinos:
                     if self.vertices[arista[0]].visitado == False:
-                        if self.vertices[actual].distancia + arista[1] < self.vertices[arista[0]].distancia:
+                        if self.vertices[actual].distancia + arista[1] < self.vertices[arista[0]].distancia and arista[1] > 0:
                             self.vertices[arista[0]].distancia = self.vertices[actual].distancia + arista[1]
                             self.vertices[arista[0]].predecesor = actual
 
